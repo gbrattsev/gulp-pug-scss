@@ -10,30 +10,73 @@ var gulp = require('gulp'),
     autoprefixer = require('gulp-autoprefixer'),
     sourcemaps = require('gulp-sourcemaps'),
     rename = require('gulp-rename'),
-    clean = require('gulp-clean');
+    clean = require('gulp-clean'),
+    rigger = require('gulp-rigger'),
+    uglify = require('gulp-uglify'),
+    imagemin = require('gulp-imagemin'),
+    pngquant = require('imagemin-pngquant'),
+    browserSync = require('browser-sync').create(),
+    watch = require('gulp-watch'),
+    reload = browserSync.reload;
 
+var config = {
+  server: {
+    baseDir: "./build"
+},
+tunnel: true,
+host: 'localhost',
+port: 9000,
+logPrefix: "G_BRAT"
+}
+
+
+var path = {
+  src: {
+    pug: 'src/views/*.pug',
+    scss: 'src/scss/*.scss',
+    js: 'src/js/*.js',
+    img: 'src/img/**/*.*',
+    fonts: 'src/fonts/**/*.*'
+  },
+  build: {
+    html: 'build/',
+    css: 'build/css/',
+    js: 'build/js/',
+    img: 'build/img/',
+    fonts: 'build/fonts/'
+  },
+  watch: {
+    pug: 'src/views/**/*.pug',
+    scss: 'src/scss/**/*.scss',
+    js: 'src/js/**/*.js',
+    img: 'src/img/**/*.*',
+    fonts: 'src/fonts/**/*.*'
+  },
+  clean:  './build'
+}
+
+// CLEAN
 gulp.task('clean', ()=>{
-  return gulp.src('build/')
+  return gulp.src(path.clean, {read: false})
     .pipe(clean())
-    .pipe(gulp.dest('build/'))
 })
-
 
 // PUG
 gulp.task('pug', ()=>{
-  return gulp.src('src/views/*.pug')
+  return gulp.src(path.src.pug)
     .pipe(plumber({
       errorHandler: notify.onError()
     }))
     .pipe(pug({
       pretty: true
     }))
-    .pipe(gulp.dest('build/'))
+    .pipe(gulp.dest(path.build.html))
+    .pipe(reload({stream: true}))
 });
 
 //STYLE-DEV
-gulp.task('scss-dev',()=>{
-  return gulp.src('src/scss/*.scss')
+gulp.task('scss',()=>{
+  return gulp.src(path.src.scss)
     .pipe(sourcemaps.init())
     .pipe(plumber({
       errorHandler: notify.onError()
@@ -63,11 +106,12 @@ gulp.task('scss-dev',()=>{
     }))
     .pipe(plumber.stop())
     .pipe(sourcemaps.write('.'))
-    .pipe(gulp.dest('build/css/'))
+    .pipe(gulp.dest(path.build.css))
+    .pipe(reload({stream: true}))
 })
 //STYLE-PROD
 gulp.task('scss-prod',()=>{
-  return gulp.src('src/scss/*.scss')
+  return gulp.src(path.src.scss)
     .pipe(plumber({
       errorHandler: notify.onError()
     }))
@@ -95,5 +139,68 @@ gulp.task('scss-prod',()=>{
       suffix: '.min'
     }))
     .pipe(plumber.stop())
-    .pipe(gulp.dest('build/css/'))
+    .pipe(gulp.dest(path.build.css))
 })
+
+//JS-DEV
+gulp.task('js', ()=>{
+  return gulp.src(path.src.js)
+    .pipe(rigger())
+    .pipe(sourcemaps.init())
+    .pipe(uglify())
+    .pipe(sourcemaps.write('.'))
+    .pipe(rename({suffix: '.min'}))
+    .pipe(gulp.dest(path.build.js))
+    .pipe(reload({stream: true}))
+})
+
+//JS-PROD
+gulp.task('js-prod', ()=>{
+  return gulp.src(path.src.js)
+    .pipe(rigger())
+    .pipe(uglify())
+    .pipe(rename({suffix: '.min'}))
+    .pipe(gulp.dest(path.build.js))
+})
+
+// FONTS
+gulp.task('fonts', ()=>{
+  return gulp.src(path.src.fonts)
+    .pipe(gulp.dest(path.build.fonts))
+    .pipe(reload({stream: true}))
+})
+
+// IMG
+gulp.task('img',()=>{
+  return gulp.src(path.src.img)
+   .pipe(imagemin({
+    progressive: true,
+    svgoPlugins: [{removeViewBox: false}],
+    use: [pngquant()],
+    interlaced: true
+    }))
+    .pipe(gulp.dest(path.build.img))
+    .pipe(reload({stream: true}))
+})
+
+gulp.task('build', gulp.series('pug', 'scss', 'js', 'fonts', 'img'))
+
+// WATCH
+gulp.task('watch',()=>{
+  gulp.watch(path.watch.pug, gulp.parallel('pug'))
+  gulp.watch(path.watch.scss, gulp.parallel('scss'))
+  gulp.watch(path.watch.js, gulp.parallel('js'))
+  gulp.watch(path.watch.fonts, gulp.parallel('fonts'))
+  gulp.watch(path.watch.img, gulp.parallel('img'))
+})
+
+// SERVER
+gulp.task('server',()=>{
+  browserSync.init(config)
+})
+
+//PRODUCTION
+gulp.task('prod', gulp.series('clean', 'pug', 'scss-prod', 'js-prod', 'fonts', 'img'))
+
+// DEFAULT
+gulp.task('default', gulp.series('build', gulp.parallel('server', 'watch')))

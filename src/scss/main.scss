@@ -1,12 +1,1 @@
 @import './helpers/import';
-
-.title {
-  font-size: $big;
-  color: red;
-}
-
-@media screen and (max-width:780px) {
-  .title {
-    font-size: $middle;
-  }
-}
