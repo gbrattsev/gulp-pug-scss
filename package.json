@@ -5,7 +5,10 @@
   "main": "index.html",
   "author": "Gennady Brattsev",
   "license": "MIT",
-  "dependencies": {},
+  "dependencies": {
+    "global": "^4.4.0",
+    "gulp-cli": "^2.2.0"
+  },
   "devDependencies": {
     "browser-sync": "^2.26.7",
     "gulp": "^4.0.2",
@@ -23,6 +26,7 @@
     "gulp-sourcemaps": "^2.6.5",
     "gulp-uglify": "^3.0.2",
     "gulp-watch": "^5.0.1",
-    "imagemin-pngquant": "^8.0.0"
+    "imagemin-pngquant": "^8.0.0",
+    "smart-grid": "^2.1.2"
   }
 }

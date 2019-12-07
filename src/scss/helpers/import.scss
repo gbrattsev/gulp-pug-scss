@@ -1,1 +1,8 @@
+// Basic import
 @import './variables';
+@import './mixins';
+@import '../libs/normalize';
+@import '../libs/smart-grid';
+
+// Import of blocks
+@import '../blocks/'
